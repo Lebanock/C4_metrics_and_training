@@ -722,7 +722,7 @@ window.toggleModalAthleteSelection = (name, checked) => {
     else modalSelectedAthletes.delete(name);
 };
 
-function openGroupModal(isNew = true) {
+window.openGroupModal = function(isNew = true) {
     const modal = $('customGroupModal');
     if (!modal) return;
     if ($('inputSearchGroupAthlete')) $('inputSearchGroupAthlete').value = '';
@@ -738,19 +738,19 @@ function openGroupModal(isNew = true) {
     renderGroupAthletesList('');
     renderSavedGroupsPills();
     modal.classList.add('active');
-}
+};
 
-function loadGroupForEdit(groupId) {
+window.loadGroupForEdit = function(groupId) {
     const grp = AppState.customGroups.find(g => g.id === groupId);
     if (!grp) return;
-    openGroupModal(false);
+    window.openGroupModal(false);
     AppState.ui.editingGroupId = grp.id;
     $('customGroupNameInput').value = grp.name;
     $('btnDeleteCurrentGroup').style.display = 'inline-flex';
     $('btnSaveGroupSubmit').innerText = '💾 Atualizar Grupo';
     modalSelectedAthletes = new Set(grp.athletes || []);
     renderGroupAthletesList('');
-}
+};
 
 /* =========================================================================
    LAYOUT & CONFIGURAÇÕES
@@ -834,22 +834,22 @@ function renderConfigModalGrids() {
     }
 }
 
-function addSubCategoryPrompt(cat) {
+window.addSubCategoryPrompt = function(cat) {
     const sub = prompt(`Adicionar nova subclasse para a categoria "${cat}":`);
     if (sub && sub.trim() && !AppState.taxonomy[cat].includes(sub.trim())) {
         AppState.taxonomy[cat].push(sub.trim());
         renderConfigModalGrids();
         updateAllCategorySelects();
     }
-}
+};
 
-function deleteTaxonomyCategory(cat) {
+window.deleteTaxonomyCategory = function(cat) {
     if (confirm(`Excluir a categoria "${cat}" e todas as suas subclasses?`)) {
         delete AppState.taxonomy[cat];
         renderConfigModalGrids();
         updateAllCategorySelects();
     }
-}
+};
 
 function updateAllCategorySelects() {
     const cats = Object.keys(AppState.taxonomy);
@@ -1325,14 +1325,14 @@ function getSummaryStructureHtml(items = []) {
     }).join('');
 }
 
-function toggleCatalogDrawer(wId) {
+window.toggleCatalogDrawer = function(wId) {
     const drawer = $(`catalog_drawer_${wId}`), btn = $(`catalog_btn_toggle_${wId}`);
     if (!drawer || !btn) return;
     const active = drawer.classList.contains('active');
     document.querySelectorAll('.catalog-preview-drawer.active').forEach(d => d.classList.remove('active'));
     document.querySelectorAll('[id^="catalog_btn_toggle_"]').forEach(b => b.innerText = '👁️ Estrutura');
     if (!active) { drawer.classList.add('active'); btn.innerText = '▲ Fechar'; }
-}
+};
 
 function getFilteredWorkouts() {
     return AppState.workoutModels.filter(w => {
@@ -1355,10 +1355,10 @@ function updateBatchActionsBar() {
     if (btn) btn.innerText = allSel ? '🔲 Desmarcar Todos' : '☑️ Selecionar Todos';
 }
 
-function toggleWorkoutSelection(id, checked) {
+window.toggleWorkoutSelection = function(id, checked) {
     if (checked) AppState.selectedWorkoutIds.add(id); else AppState.selectedWorkoutIds.delete(id);
     renderCatalogGrid();
-}
+};
 
 function toggleSelectAllFiltered() {
     const filtered = getFilteredWorkouts();
@@ -1426,7 +1426,7 @@ function renderCatalogGrid() {
     }).join('');
 }
 
-function duplicateWorkout(id) {
+window.duplicateWorkout = function(id) {
     const orig = AppState.workoutModels.find(w => w.id === id);
     if (!orig) return;
     const dup = { ...JSON.parse(JSON.stringify(orig)), id: 'wk_' + Date.now(), nome: `${orig.nome} (Cópia)` };
@@ -1435,15 +1435,15 @@ function duplicateWorkout(id) {
     updateCatalogBadgeCount(); renderCatalogGrid(); renderOverviewTable();
     salvarTreinoNaPlanilha(dup);
     showToast(`Modelo "${dup.nome}" duplicado!`, 'success');
-}
+};
 
-function selecionarTreinoParaPrescricao(id) {
+window.selecionarTreinoParaPrescricao = function(id) {
     AppState.ui.selectedWorkoutId = id;
     renderOverviewTable();
     if (AppState.layoutMode === 'tabs') switchTab('tab-overview');
     else $('overviewGridCard')?.scrollIntoView({ behavior: 'smooth' });
     showToast('Treino carregado na visualização!', 'info');
-}
+};
 
 /* =========================================================================
    BUILDER
@@ -1650,7 +1650,7 @@ window.removeRepeatSubStep = (p, c) => { AppState.currentBuilderItems[p].steps.s
 /* =========================================================================
    EDIÇÃO E EXCLUSÃO
    ========================================================================= */
-function startEditWorkout(workoutId) {
+window.startEditWorkout = function(workoutId) {
     const w = AppState.workoutModels.find(x => x.id === workoutId);
     if (!w) return;
     $('editingWorkoutId').value = w.id;
@@ -1666,7 +1666,7 @@ function startEditWorkout(workoutId) {
     else $('addWorkoutCard')?.scrollIntoView({ behavior: 'smooth' });
     renderBuilderUI();
     showToast(`Modelo "${w.nome}" carregado!`, 'info');
-}
+};
 
 function cancelEditWorkout() {
     $('editingWorkoutId').value = '';
@@ -1679,7 +1679,7 @@ function cancelEditWorkout() {
     renderBuilderUI();
 }
 
-function deleteWorkout(workoutId) {
+window.deleteWorkout = function(workoutId) {
     const w = AppState.workoutModels.find(x => x.id === workoutId);
     if (!w) return;
     if (prompt(`Atenção: Excluir permanentemente o modelo "${w.nome}"? Digite "delete":`)?.toLowerCase() === 'delete') {
@@ -1692,15 +1692,31 @@ function deleteWorkout(workoutId) {
         excluirTreinoNaPlanilha(workoutId);
         showToast(`Modelo excluído!`, 'success');
     }
-}
+};
 
 /* =========================================================================
    VISÃO GERAL
    ========================================================================= */
 const getAbbreviatedStepName = name => {
     const c = String(name || '').trim().toLowerCase();
-    return c === 'ativação inicial' ? 'aq' : c === 'desaquecimento' ? 'des' : name;
+    if (c === 'ativação inicial') return 'aq';
+    if (c === 'desaquecimento') return 'des';
+    if (c === 'correr') return 'Run';
+    if (c === 'descansar') return 'Rest';
+    return name;
 };
+
+function formatCompactPaceDisplay(calcPace, item) {
+    if (!calcPace) return 'Livre';
+    const lower = calcPace.toLowerCase();
+    if (lower.includes('livre')) return 'Livre';
+    if (lower.includes('subjetiva') || lower.includes('pse')) return `PSE${item.pse ?? 5}`;
+    if (calcPace.includes('~')) {
+        const parts = calcPace.split('~').map(p => p.replace(/\/km/gi, '').trim());
+        if (parts.length === 2 && parts[0] && parts[1]) return `${parts[0]}/${parts[1]}`;
+    }
+    return calcPace.replace(/\/km/gi, '').trim();
+}
 
 function renderFocusedAthleteDetails(currentWorkout, currentAthlete) {
     const container = $('focusedAthletePrescriptionArea');
@@ -1818,14 +1834,16 @@ function renderOverviewTable() {
             const sem = getIntensitySemanticClass(it);
             if (it.tipoItem === 'step') {
                 const c = calculateStepMetrics(it, vam);
-                let p = c.pace.toLowerCase().includes('livre') ? 'Livre' : c.pace.toLowerCase().includes('subjetiva') ? `PSE${it.pse ?? 5}` : c.pace.split('~')[0].trim();
-                return `<span class="step-pill-badge ${sem}" title="${it.descricaoPasso || ''}"><strong>${getAbbreviatedStepName(getStepDisplayName(it))}</strong>(${c.alvoFormatado}):<span>${p}</span></span>`;
+                const stepLabel = getAbbreviatedStepName(getStepDisplayName(it));
+                const paceRange = formatCompactPaceDisplay(c.pace, it);
+                return `<span class="step-pill-badge ${sem}" title="${it.descricaoPasso || ''}"><strong>${stepLabel}</strong>(${c.alvoFormatado})<strong style="margin-left:2px;">${paceRange}</strong></span>`;
             }
             if (it.tipoItem === 'repeat' && Array.isArray(it.steps)) {
                 const inner = it.steps.map(sub => {
                     const c = calculateStepMetrics(sub, vam);
-                    let p = c.pace.toLowerCase().includes('livre') ? 'Livre' : c.pace.toLowerCase().includes('subjetiva') ? `PSE${sub.pse ?? 5}` : c.pace.split('~')[0].trim();
-                    return `<span>${getAbbreviatedStepName(getStepDisplayName(sub))}(${c.alvoFormatado})@<strong class="${getIntensitySemanticClass(sub)}">${p}</strong></span>`;
+                    const subLabel = getAbbreviatedStepName(getStepDisplayName(sub));
+                    const subPaceRange = formatCompactPaceDisplay(c.pace, sub);
+                    return `<span>${subLabel}(${c.alvoFormatado})<strong class="${getIntensitySemanticClass(sub)}" style="padding:1px 3px; border-radius:3px; margin-left:1px;">${subPaceRange}</strong></span>`;
                 }).join('+');
                 return `<span class="step-pill-badge is-loop"><strong>🔁${it.reps}x</strong>[${inner}]</span>`;
             }
@@ -1844,12 +1862,12 @@ function renderOverviewTable() {
     }).join('');
 }
 
-function selectSpecificAthlete(name) {
+window.selectSpecificAthlete = function(name) {
     if (AppState.ui.selectedWorkoutAthlete === name) return;
     AppState.ui.selectedWorkoutAthlete = name;
     document.querySelectorAll('#overviewTableBody tr').forEach(r => r.classList.toggle('active-athlete-row', r.getAttribute('data-athlete') === name));
     renderFocusedAthleteDetails(AppState.workoutModels.find(w => w.id === AppState.ui.selectedWorkoutId) || AppState.workoutModels[0], AppState.students.find(a => a.name === name) || AppState.students[0]);
-}
+};
 
 function updateBuilderAthleteSelect() {
     const sel = $('builderPreviewAthlete');
@@ -1995,7 +2013,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    bindEvent('btnOpenCreateGroupModal', 'click', () => openGroupModal(true));
+    bindEvent('btnOpenCreateGroupModal', 'click', () => window.openGroupModal(true));
     bindEvent('inputSearchGroupAthlete', 'input', e => renderGroupAthletesList(e.target.value));
     bindEvent('btnGroupSelectAll', 'click', () => document.querySelectorAll('.group-athlete-chk').forEach(c => { c.checked = true; modalSelectedAthletes.add(c.value); }));
     bindEvent('btnGroupClearAll', 'click', () => { modalSelectedAthletes.clear(); document.querySelectorAll('.group-athlete-chk').forEach(c => c.checked = false); });
@@ -2016,7 +2034,7 @@ document.addEventListener('DOMContentLoaded', () => {
             AppState.customGroups.push({ id: 'grp_' + Date.now(), name: nome, athletes: selected });
         }
 
-        try { localStorage.setItem(STORAGE_KEYS.CUSTOM_GROUPS, JSON.stringify(AppState.customGroups)); } catch(err){}
+        localStorage.setItem(STORAGE_KEYS.CUSTOM_GROUPS, JSON.stringify(AppState.customGroups));
         updateOverviewGroupSelectors(); renderOverviewTable(); $('customGroupModal')?.classList.remove('active');
         
         const ok = await salvarGruposNaPlanilha();
@@ -2027,7 +2045,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bindEvent('btnDeleteCurrentGroup', 'click', async () => {
         if (!AppState.ui.editingGroupId || !confirm('Excluir esta turma?')) return;
         AppState.customGroups = AppState.customGroups.filter(g => g.id !== AppState.ui.editingGroupId);
-        try { localStorage.setItem(STORAGE_KEYS.CUSTOM_GROUPS, JSON.stringify(AppState.customGroups)); } catch(err){}
+        localStorage.setItem(STORAGE_KEYS.CUSTOM_GROUPS, JSON.stringify(AppState.customGroups));
         updateOverviewGroupSelectors();
         if (AppState.ui.overviewFilterMode === 'grp_' + AppState.ui.editingGroupId) {
             AppState.ui.overviewFilterMode = 'all'; $('overviewFilterType').value = 'all';
@@ -2090,7 +2108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             AppState.workoutModels.push(modelo);
         }
 
-        try { localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(AppState.workoutModels)); } catch(err){}
+        localStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(AppState.workoutModels));
         updateCatalogBadgeCount(); renderCatalogGrid(); renderOverviewTable();
         salvarTreinoNaPlanilha(modelo);
         showToast(`Modelo salvo com sucesso!`, 'success');
